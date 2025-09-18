@@ -1,3 +1,64 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "avatar-1",
+      "description": "Avatar of a person",
+      "imageUrl": "https://picsum.photos/seed/avatar1/40/40",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar-2",
+      "description": "Avatar of a person",
+      "imageUrl": "https://picsum.photos/seed/avatar2/40/40",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar-3",
+      "description": "Avatar of a person",
+      "imageUrl": "https://picsum.photos/seed/avatar3/40/40",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar-4",
+      "description": "Avatar of a person",
+      "imageUrl": "https://picsum.photos/seed/avatar4/40/40",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar-5",
+      "description": "Avatar of a person",
+      "imageUrl": "https://picsum.photos/seed/avatar5/40/40",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar-6",
+      "description": "Avatar of a person",
+      "imageUrl": "https://picsum.photos/seed/avatar6/40/40",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar-7",
+      "description": "Avatar of a person",
+      "imageUrl": "https://picsum.photos/seed/avatar7/40/40",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar-8",
+      "description": "Avatar of a person",
+      "imageUrl": "https://picsum.photos/seed/avatar8/40/40",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar-9",
+      "description": "Avatar of a person",
+      "imageUrl": "https://picsum.photos/seed/avatar9/40/40",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar-10",
+      "description": "Avatar of a person",
+      "imageUrl": "https://picsum.photos/seed/avatar10/40/40",
+      "imageHint": "person face"
+    }
+  ]
 }
