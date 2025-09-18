@@ -1,12 +1,55 @@
+
+'use client';
+
+import { useEffect, useState } from 'react';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { MOCK_JOBS } from '@/lib/data';
+import type { JobPosting } from '@/lib/types';
+import { CreateJobDialog } from '@/components/jobs/create-job-dialog';
 
 export default function JobsPage() {
+  const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchJobs() {
+      try {
+        const response = await fetch('/api/jobs');
+        const data = await response.json();
+        setJobs(data.data);
+      } catch (error) {
+        console.error('Failed to fetch jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchJobs();
+  }, []);
+
+  const handleJobCreated = (newJob: JobPosting) => {
+    setJobs(prev => [newJob, ...prev]);
+  };
+
+  if (loading) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Job Postings</CardTitle>
+                <CardDescription>Loading job postings...</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex justify-center items-center h-48">
+                    <p>Loading...</p>
+                </div>
+            </CardContent>
+        </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -14,10 +57,7 @@ export default function JobsPage() {
           <CardTitle>Job Postings</CardTitle>
           <CardDescription>Manage your company's open positions.</CardDescription>
         </div>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          New Job
-        </Button>
+        <CreateJobDialog onJobCreated={handleJobCreated} />
       </CardHeader>
       <CardContent>
         <Table>
@@ -34,7 +74,7 @@ export default function JobsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {MOCK_JOBS.map((job) => (
+            {jobs.map((job) => (
               <TableRow key={job.id}>
                 <TableCell className="font-medium">{job.title}</TableCell>
                 <TableCell className="hidden md:table-cell">{job.department}</TableCell>

@@ -12,9 +12,12 @@ export type JobPosting = {
   department: string;
   location: string;
   salary: string;
-  status: "Open" | "Closed" | "On hold";
+  status: "Open" | "Closed" | "On hold" | "Draft";
   applications: number;
   deadline: string;
+  description: string;
+  skills: string[];
+  postedDate: string;
 };
 
 export type CandidateStage = 'Applied' | 'Screening' | 'Interview' | 'Offered' | 'Hired' | 'Rejected';
