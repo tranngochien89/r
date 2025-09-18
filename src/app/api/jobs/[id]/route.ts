@@ -37,6 +37,36 @@ const jobUpdateSchema = z.object({
   deadline: z.string().datetime().optional(),
 });
 
+/**
+ * @swagger
+ * /api/jobs/{id}:
+ *   get:
+ *     summary: Retrieve details of a specific job
+ *     description: Retrieve details of a specific job posting by its ID.
+ *     tags:
+ *       - Jobs
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the job posting to retrieve.
+ *     responses:
+ *       200:
+ *         description: Job details.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/JobPosting'
+ *       404:
+ *         description: Job not found.
+ *       500:
+ *         description: Failed to retrieve job.
+ */
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const db = await readDb();
@@ -53,6 +83,48 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
+/**
+ * @swagger
+ * /api/jobs/{id}:
+ *   put:
+ *     summary: Update an existing job posting
+ *     description: Updates an existing job posting. Requires authentication.
+ *     tags:
+ *       - Jobs
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the job posting to update.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/NewJob' # Reusing NewJob as all fields are optional in the handler
+ *     responses:
+ *       200:
+ *         description: Job updated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/JobPosting'
+ *       400:
+ *         description: Invalid input data.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: Job not found.
+ *       500:
+ *         description: Failed to update job.
+ */
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   // In a real app, add authentication/authorization checks
   try {
@@ -81,6 +153,33 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
+/**
+ * @swagger
+ * /api/jobs/{id}:
+ *   delete:
+ *     summary: Delete a job posting
+ *     description: Deletes a job posting by its ID. Requires authentication.
+ *     tags:
+ *       - Jobs
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the job posting to delete.
+ *     responses:
+ *       204:
+ *         description: Job deleted successfully.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: Job not found.
+ *       500:
+ *         description: Failed to delete job.
+ */
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   // In a real app, add authentication/authorization checks
   try {

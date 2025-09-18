@@ -40,6 +40,46 @@ const jobSchema = z.object({
   deadline: z.string().datetime(),
 });
 
+/**
+ * @swagger
+ * /api/jobs:
+ *   get:
+ *     summary: Retrieve a list of job postings
+ *     description: Retrieve a list of all job postings, with optional filtering by status, location, or skills.
+ *     tags:
+ *       - Jobs
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [Open, Closed, On hold, Draft]
+ *         description: Filter jobs by status
+ *       - in: query
+ *         name: location
+ *         schema:
+ *           type: string
+ *         description: Filter jobs by location (case-insensitive search)
+ *       - in: query
+ *         name: skills
+ *         schema:
+ *           type: string
+ *         description: Filter jobs by skills (comma-separated list)
+ *     responses:
+ *       200:
+ *         description: A list of job postings.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/JobPosting'
+ *       500:
+ *         description: Failed to retrieve jobs.
+ */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -67,6 +107,120 @@ export async function GET(request: Request) {
   }
 }
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     JobPosting:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: The job ID.
+ *           example: JOB-001
+ *         title:
+ *           type: string
+ *           description: The job title.
+ *           example: Senior Frontend Developer
+ *         department:
+ *           type: string
+ *           example: Engineering
+ *         location:
+ *           type: string
+ *           example: Ho Chi Minh City, Vietnam
+ *         salary:
+ *           type: string
+ *           example: 30,000,000 - 50,000,000 VND
+ *         status:
+ *           type: string
+ *           enum: [Open, Closed, On hold, Draft]
+ *           example: Open
+ *         applications:
+ *           type: integer
+ *           example: 25
+ *         deadline:
+ *           type: string
+ *           format: date-time
+ *           example: 2025-10-30T17:00:00.000Z
+ *         description:
+ *           type: string
+ *           example: We are seeking an experienced Frontend Developer...
+ *         skills:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["JavaScript", "React", "Next.js"]
+ *         postedDate:
+ *           type: string
+ *           format: date-time
+ *           example: 2025-09-01T10:00:00.000Z
+ *     NewJob:
+ *       type: object
+ *       required:
+ *         - title
+ *         - department
+ *         - location
+ *         - salary
+ *         - description
+ *         - skills
+ *         - status
+ *         - deadline
+ *       properties:
+ *         title:
+ *           type: string
+ *         department:
+ *           type: string
+ *         location:
+ *           type: string
+ *         salary:
+ *           type: string
+ *         description:
+ *           type: string
+ *         skills:
+ *           type: array
+ *           items:
+ *             type: string
+ *         status:
+ *           type: string
+ *           enum: [Open, Closed, On hold, Draft]
+ *         deadline:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
+ * /api/jobs:
+ *   post:
+ *     summary: Create a new job posting
+ *     description: Creates a new job posting. Requires authentication.
+ *     tags:
+ *       - Jobs
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/NewJob'
+ *     responses:
+ *       201:
+ *         description: Job created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/JobPosting'
+ *       400:
+ *         description: Invalid input data.
+ *       401:
+ *         description: Unauthorized.
+ *       500:
+ *         description: Failed to create job.
+ */
 export async function POST(request: Request) {
   // In a real app, you'd add authentication and authorization checks here
   // For example, using JWT and checking user roles.
