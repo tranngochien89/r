@@ -22,7 +22,7 @@ export type JobPosting = {
 
 export type CandidateStage = 'Applied' | 'Screening' | 'Interview' | 'Offered' | 'Hired' | 'Rejected';
 
-export const STAGES: CandidateStage[] = ['Applied', 'Screening', 'Interview', 'Offered', 'Hired', 'Rejected'];
+export const STAGES: CandidateStage[] = ['Applied', 'Screening', 'Interview', 'Offered', 'Hired'];
 
 export type Candidate = {
   id: string;
@@ -32,7 +32,7 @@ export type Candidate = {
   avatar: string;
   jobId: string;
   jobTitle: string;
-  stage: CandidateStage;
+  stage: CandidateStage | 'Rejected';
   skills: string[];
   lastContact: string;
 };
