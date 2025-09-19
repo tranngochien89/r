@@ -24,6 +24,14 @@ export type CandidateStage = 'Applied' | 'Screening' | 'Interview' | 'Offered' |
 
 export const STAGES: CandidateStage[] = ['Applied', 'Screening', 'Interview', 'Offered', 'Hired'];
 
+export type Interaction = {
+  id: string;
+  type: 'note' | 'email' | 'call';
+  content: string;
+  date: string; // ISO 8601
+  author: string;
+}
+
 export type Candidate = {
   id: string;
   name: string;
@@ -34,8 +42,15 @@ export type Candidate = {
   jobTitle: string;
   stage: CandidateStage | 'Rejected';
   skills: string[];
-  lastContact: string;
+  lastContact: string; // ISO 8601 Date
+  experience?: string;
+  interactions: Interaction[];
 };
+
+export type AppData = {
+  jobs: JobPosting[];
+  candidates: Candidate[];
+}
 
 export type NavItem = {
   href: string;

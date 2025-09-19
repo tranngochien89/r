@@ -6,15 +6,13 @@ import { useEffect, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { extractCandidateInfo } from '@/app/actions';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { MOCK_JOBS } from '@/lib/data';
-import type { ExtractedCandidateData } from '@/lib/types';
+import type { Candidate, JobPosting } from '@/lib/types';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -28,12 +26,14 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface AddCandidateFormProps {
-  onSuccess: (data: { name: string; email: string; phone?: string; jobId: string; jobTitle: string; stage: 'Applied'; skills: string[]; }) => void;
+  onSuccess: (data: Candidate) => void;
+  jobs: JobPosting[];
 }
 
-export default function AddCandidateForm({ onSuccess }: AddCandidateFormProps) {
+export default function AddCandidateForm({ onSuccess, jobs }: AddCandidateFormProps) {
   const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
+  const [isAiPending, startAiTransition] = useTransition();
+  const [isSubmitPending, setIsSubmitPending] = useState(false);
   const [file, setFile] = useState<File | null>(null);
 
   const form = useForm<FormValues>({
@@ -56,7 +56,7 @@ export default function AddCandidateForm({ onSuccess }: AddCandidateFormProps) {
     const reader = new FileReader();
     reader.onloadend = () => {
       const dataUri = reader.result as string;
-      startTransition(async () => {
+      startAiTransition(async () => {
         const result = await extractCandidateInfo({ cvDataUri: dataUri });
         if (result.success && result.data) {
           const { name, email, phone, skills, experience } = result.data;
@@ -76,19 +76,50 @@ export default function AddCandidateForm({ onSuccess }: AddCandidateFormProps) {
       });
     };
     reader.readAsDataURL(file);
-  }, [file, reset, toast, form, startTransition]);
+  }, [file, reset, toast, form, startAiTransition]);
 
-  const onSubmit = (values: FormValues) => {
-    const selectedJob = MOCK_JOBS.find(job => job.id === values.jobId);
+  const onSubmit = async (values: FormValues) => {
+    const selectedJob = jobs.find(job => job.id === values.jobId);
     if (!selectedJob) return;
 
-    onSuccess({
-        ...values,
-        jobTitle: selectedJob.title,
-        stage: 'Applied',
-        skills: values.skills ? values.skills.split(',').map(s => s.trim()) : [],
-    });
+    setIsSubmitPending(true);
+
+    const candidateData = {
+      name: values.name,
+      email: values.email,
+      phone: values.phone,
+      jobId: values.jobId,
+      jobTitle: selectedJob.title,
+      stage: 'Applied' as const,
+      skills: values.skills ? values.skills.split(',').map(s => s.trim()) : [],
+      experience: values.experience,
+    };
+
+    try {
+      const response = await fetch('/api/candidates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(candidateData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create candidate.');
+      }
+      
+      const result = await response.json();
+      toast({ title: 'Success', description: 'New candidate added.' });
+      onSuccess(result.data);
+      form.reset();
+
+    } catch (error) {
+      const err = error instanceof Error ? error.message : 'An unexpected error occurred.';
+      toast({ variant: 'destructive', title: 'Error', description: err });
+    } finally {
+      setIsSubmitPending(false);
+    }
   };
+  
+  const isPending = isAiPending || isSubmitPending;
 
   return (
     <Form {...form}>
@@ -96,7 +127,7 @@ export default function AddCandidateForm({ onSuccess }: AddCandidateFormProps) {
         <div className="relative group">
             <label htmlFor="cv-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80 transition-colors">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    {isPending ? (
+                    {isAiPending ? (
                         <>
                             <Loader2 className="w-8 h-8 mb-4 text-muted-foreground animate-spin" />
                             <p className="mb-2 text-sm text-muted-foreground">Extracting data...</p>
@@ -161,14 +192,14 @@ export default function AddCandidateForm({ onSuccess }: AddCandidateFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Applying for</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPending}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={isPending}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a job position" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {MOCK_JOBS.filter(j => j.status === 'Open').map(job => (
+                    {jobs.filter(j => j.status === 'Open').map(job => (
                       <SelectItem key={job.id} value={job.id}>{job.title}</SelectItem>
                     ))}
                   </SelectContent>
@@ -185,7 +216,7 @@ export default function AddCandidateForm({ onSuccess }: AddCandidateFormProps) {
             <FormItem>
               <FormLabel>Skills (comma-separated)</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. React, Node.js, Project Management" {...field} disabled={isPending} />
+                <Input placeholder="e.g. React, Node.js, Project Management" {...field} value={field.value || ''} disabled={isPending} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -198,14 +229,14 @@ export default function AddCandidateForm({ onSuccess }: AddCandidateFormProps) {
             <FormItem>
               <FormLabel>Experience Summary</FormLabel>
               <FormControl>
-                <Textarea placeholder="Brief summary of work experience..." className="resize-none" {...field} disabled={isPending} />
+                <Textarea placeholder="Brief summary of work experience..." className="resize-none" {...field} value={field.value || ''} disabled={isPending} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <Button type="submit" className="w-full" disabled={isPending}>
-          {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isSubmitPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Save Candidate
         </Button>
       </form>

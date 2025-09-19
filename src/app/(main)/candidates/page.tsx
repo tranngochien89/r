@@ -1,10 +1,6 @@
-import CandidateKanban from '@/components/candidates/candidate-kanban';
-import { MOCK_CANDIDATES } from '@/lib/data';
+import { redirect } from 'next/navigation';
 
 export default function CandidatesPage() {
-  return (
-    <div className="h-full">
-      <CandidateKanban initialCandidates={MOCK_CANDIDATES} />
-    </div>
-  );
+  // Redirect to dashboard as it serves as the main candidate pipeline view
+  redirect('/dashboard');
 }

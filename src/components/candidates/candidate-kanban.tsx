@@ -1,29 +1,90 @@
 'use client';
 
-import { useState } from 'react';
-import { PlusCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Candidate, CandidateStage, STAGES } from '@/lib/types';
+import { Candidate, CandidateStage, JobPosting, STAGES } from '@/lib/types';
 import AddCandidateDialog from './add-candidate-dialog';
 import CandidateCard from './candidate-card';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
-interface CandidateKanbanProps {
-  initialCandidates: Candidate[];
-}
+export default function CandidateKanban() {
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-export default function CandidateKanban({ initialCandidates }: CandidateKanbanProps) {
-  const [candidates, setCandidates] = useState<Candidate[]>(initialCandidates);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [candidatesRes, jobsRes] = await Promise.all([
+          fetch('/api/candidates'),
+          fetch('/api/jobs')
+        ]);
+        
+        if (!candidatesRes.ok || !jobsRes.ok) {
+          throw new Error('Failed to fetch data');
+        }
 
-  const handleUpdateCandidateStage = (candidateId: string, newStage: CandidateStage) => {
+        const candidatesData = await candidatesRes.json();
+        const jobsData = await jobsRes.json();
+        
+        setCandidates(candidatesData.data || []);
+        setJobs(jobsData.data || []);
+
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'Could not fetch data.',
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [toast]);
+  
+
+  const handleUpdateCandidateStage = async (candidateId: string, newStage: CandidateStage) => {
+    const originalCandidates = [...candidates];
+    
+    // Optimistic update
     setCandidates((prevCandidates) =>
       prevCandidates.map((c) => (c.id === candidateId ? { ...c, stage: newStage } : c))
     );
+
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stage: newStage }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update candidate stage.');
+        }
+
+        const updatedCandidate = await response.json();
+        setCandidates(prev => prev.map(c => c.id === candidateId ? updatedCandidate.data : c));
+
+    } catch (error) {
+        // Revert on error
+        setCandidates(originalCandidates);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'Could not update candidate.',
+        });
+    }
   };
   
   const handleAddCandidate = (newCandidate: Candidate) => {
     setCandidates(prev => [newCandidate, ...prev]);
+  }
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>
   }
 
   return (
@@ -32,6 +93,7 @@ export default function CandidateKanban({ initialCandidates }: CandidateKanbanPr
         <h1 className="text-2xl font-bold">Candidate Pipeline</h1>
         <AddCandidateDialog 
           onCandidateAdded={handleAddCandidate}
+          jobs={jobs}
         />
       </div>
       <ScrollArea className="flex-grow">
@@ -46,7 +108,7 @@ export default function CandidateKanban({ initialCandidates }: CandidateKanbanPr
                     {stageCandidates.length}
                   </span>
                 </div>
-                <div className="space-y-4 h-full bg-muted/50 rounded-lg p-2">
+                <div className="space-y-4 h-full bg-muted/50 rounded-lg p-2 min-h-[100px]">
                   {stageCandidates.length > 0 ? (
                     stageCandidates.map((candidate) => (
                       <CandidateCard

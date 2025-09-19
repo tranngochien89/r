@@ -13,22 +13,18 @@ import {
 } from '@/components/ui/dialog';
 import AddCandidateForm from './add-candidate-form';
 import type { Candidate } from '@/lib/types';
+import type { JobPosting } from '@/lib/types';
 
 interface AddCandidateDialogProps {
   onCandidateAdded: (candidate: Candidate) => void;
+  jobs: JobPosting[];
 }
 
-export default function AddCandidateDialog({ onCandidateAdded }: AddCandidateDialogProps) {
+export default function AddCandidateDialog({ onCandidateAdded, jobs }: AddCandidateDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleSuccess = (newCandidate: Omit<Candidate, 'id' | 'avatar' | 'lastContact' >) => {
-    const candidateWithId: Candidate = {
-      ...newCandidate,
-      id: `CAND-${Date.now()}`,
-      avatar: `https://picsum.photos/seed/${Date.now()}/40/40`,
-      lastContact: new Date().toISOString().split('T')[0],
-    };
-    onCandidateAdded(candidateWithId);
+  const handleSuccess = (newCandidate: Candidate) => {
+    onCandidateAdded(newCandidate);
     setIsOpen(false);
   };
 
@@ -47,7 +43,7 @@ export default function AddCandidateDialog({ onCandidateAdded }: AddCandidateDia
             Upload a CV to automatically extract information, or fill out the form manually.
           </DialogDescription>
         </DialogHeader>
-        <AddCandidateForm onSuccess={handleSuccess} />
+        <AddCandidateForm onSuccess={handleSuccess} jobs={jobs} />
       </DialogContent>
     </Dialog>
   );
